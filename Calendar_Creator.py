@@ -12,11 +12,11 @@ def Create_Calendar (service, calendar_id, hour_adjustment):
     # What the event says
     event_body = {
         "start": {
-            "dateTime": convert_to_RFC_datetime(2021, 3, 14, 12 + hour_adjustment, 30),
+            "dateTime": convert_to_RFC_datetime(2021, 4, 13, 12 + hour_adjustment, 30),
             "timeZone": "America/Los_Angeles",
         },
         "end": {
-            "dateTime": convert_to_RFC_datetime(2021, 3, 14, 14 + hour_adjustment, 30),
+            "dateTime": convert_to_RFC_datetime(2021, 4, 13, 14 + hour_adjustment, 30),
             "timeZone": "America/Los_Angeles",
         },
         "summary": "Do Python",
