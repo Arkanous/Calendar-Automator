@@ -4,6 +4,7 @@ import time
 import io
 import pprint
 from googleapiclient.http import MediaIoBaseDownload
+from googleapiclient.http import MediaIoBaseUpload
 from Google_Authenticator import Create_Service
 
 CLIENT_SECRET_FILE = "client_secret_file.json"
@@ -37,7 +38,7 @@ time.sleep(2)
 
 document_id = "1_QysJOyyaZADogf1bz0wZ7iyoZ9edrQ7af6cJFl_4C4"
 sheets_id = "1atCLbmLD4rhNuLPIqoOFAXrF_O9jYSNUyCsdDinJWrw"
-folder_id = "11MAb_tV8p6OebQlA1tgDiuboWKki72R8" # None --> save in parent folder
+folder_id = "11MAb_tV8p6OebQlA1tgDiuboWKki72R8"
 
 responses = {}
 
@@ -68,26 +69,48 @@ def mapping(merge_field, value = ""):
 
 # Iterate each record and combine with the docs
 for record in records:
-    print("processing record {0}..." .format(record[2]))
+    print("processing record {0}...".format(record[2]))
 
-    #Copy new doc file as new doc file
+    # Copy new doc file as new doc file
     document_title = "SOW for {0}".format(record[2])
 
     responses["docs"] = service_drive.files().copy(
         fileId = document_id,
         body = {
-            "parents": [service_drive],
+            "parents": [folder_id],
             "name": document_title
         }
     ).execute()
     new_document_id = responses["docs"]["id"]
 
-    #update google docs document
-    merge_fields_info = [mapping(columns[indx],value) for indx, value in enumerate(record)]
+    # Update Google Docs document
+    merge_fields_info = [mapping(columns[indx], value) for indx, value in enumerate(record)]
 
+    # Upload Google Docs to the Drive folder
     service_docs.documents().batchUpdate(
-        documentId = new_document_id,
+        documentId = document_id,
         body = {
             "requests": merge_fields_info
         }
     ).execute()
+
+    # Create PDF of the document
+    PDF_MIME_TYPE = "application/pdf"
+
+    byteString = service_drive.files().export(
+        fileId = document_id,
+        mimeType = PDF_MIME_TYPE
+    ).execute()
+
+    media_object = MediaIoBaseUpload(io.BytesIO(byteString), mimetype=PDF_MIME_TYPE)
+
+    # Upload PDF to the drive
+    service_drive.files().create(
+        media_body = media_object,
+        body={
+            "parents": [folder_id],
+            "name": "{0} (PDF).pdf".format(document_title)
+        }
+    ).execute()
+
+print("Mail Merge Complete.")
